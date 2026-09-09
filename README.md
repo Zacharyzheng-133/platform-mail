@@ -10,9 +10,12 @@ platform-mail/
 │   └── SKILL.md          # 平台技能：登录 → 读取新消息 → 回复消息（5 节规范）
 ├── platforms/
 │   └── mail.py           # 桥服务适配器：data/messages/mail.md → 候选人卡片
+├── tools/
+│   └── gen_mail_report.py # HTML 网页报告生成器：mail.md → data/reports/*.html（纯标准库）
 └── data/
     ├── messages/
-    │   └── mail.md       # 消息记录（技能唯一输出，仓库内为空模板）
+    │   └── mail.md       # 消息记录（技能唯一消息输出，仓库内为空模板）
+    ├── reports/          # 生成的 HTML 网页报告（仓库内为空目录）
     └── mail.json         # 零代码兜底数据（仓库内为空模板）
 ```
 
@@ -26,8 +29,9 @@ platform-mail/
 
 1. `platforms/mail.py` 复制到平台工程 `platforms/` 目录，文件名保持 `mail.py`。
 2. `platform-mail/` 目录放入平台工程的技能目录。
-3. `data/` 合并到平台工程 `data/` 目录。
-4. 刷新桥服务（支持热重载），访问 `http://127.0.0.1:8790/api/ping`，确认返回中包含 `mail` 平台、设置页显示「邮箱 已接入」。
+3. `tools/gen_mail_report.py` 复制到平台工程 `tools/` 目录（HTML 网页报告生成器，纯标准库）。
+4. `data/` 合并到平台工程 `data/` 目录。
+5. 刷新桥服务（支持热重载），访问 `http://127.0.0.1:8790/api/ping`，确认返回中包含 `mail` 平台、设置页显示「邮箱 已接入」。
 
 ## 数据链路
 
@@ -36,10 +40,22 @@ platform-mail/
    │  platform-mail 技能定时拉取未读回复（飞书走 lark-cli，Gmail 等网页邮箱走浏览器自动化）
    ▼
 data/messages/mail.md     每行：发件人 | 内容 | 时间 | 已回复(Y/N)
-   │  platforms/mail.py 的 Adapter.messages() 解析
-   ▼
-候选人卡片（uid 稳定去重，返回给桥服务 / 写入 data/mail.json）
+   ├─ platforms/mail.py 的 Adapter.messages() 解析
+   │     ▼
+   │  候选人卡片（uid 稳定去重，返回给桥服务 / 写入 data/mail.json）
+   └─ tools/gen_mail_report.py
+         ▼
+     data/reports/mail_YYYYMMDD.html + mail_latest.html（单文件 HTML 网页报告，可直接在平台网页展示）
 ```
+
+## 网页报告（HTML）
+
+每次收集后由 `tools/gen_mail_report.py` 读取 `mail.md` 生成单文件 HTML 报告：
+
+- `data/reports/mail_YYYYMMDD.html` 按日留档，`data/reports/mail_latest.html` 为固定文件名供平台页面直接引用。
+- 全部样式内联、不依赖任何外部 CDN/字体/图片，离线可打开；含统计卡片（消息总数、候选人数去重、已回复、待回复）与候选人消息表格（发件人/内容/时间/状态），按时间倒序。
+- 状态配色：待回复琥珀色、已回复绿色；写入 HTML 的文本统一做转义；无消息时显示空状态。
+- 纯 Python 标准库实现：`python tools/gen_mail_report.py`（可用 `--messages`、`--outdir` 指定路径）。
 
 ## 消息记录格式
 
@@ -69,7 +85,7 @@ data/messages/mail.md     每行：发件人 | 内容 | 时间 | 已回复(Y/N)
 ## 本地验证
 
 ```bash
-python -m py_compile platforms/mail.py
+python -m py_compile platforms/mail.py tools/gen_mail_report.py
 ```
 
-适配器为纯标准库实现，构造样例 `data/messages/mail.md` 后调用 `Adapter().messages()` 即可看到候选人卡片输出。
+适配器为纯标准库实现，构造样例 `data/messages/mail.md` 后调用 `Adapter().messages()` 即可看到候选人卡片输出；运行 `python tools/gen_mail_report.py` 可在 `data/reports/` 看到对应 HTML 网页报告。
