@@ -53,9 +53,9 @@ data/messages/mail.md     每行：发件人 | 内容 | 时间 | 已回复(Y/N)
 每次收集后由 `tools/gen_mail_report.py` 读取 `mail.md` 生成单文件 HTML 报告：
 
 - `data/reports/mail_YYYYMMDD.html` 按日留档，`data/reports/mail_latest.html` 为固定文件名供平台页面直接引用。
-- 全部样式内联、不依赖任何外部 CDN/字体/图片，离线可打开；含统计卡片（消息总数、候选人数去重、已回复、待回复）与候选人消息表格（发件人/内容/时间/状态），按时间倒序。
-- 状态配色：待回复琥珀色、已回复绿色；写入 HTML 的文本统一做转义；无消息时显示空状态。
-- 纯 Python 标准库实现：`python tools/gen_mail_report.py`（可用 `--messages`、`--outdir` 指定路径）。
+- 全部样式内联、不依赖任何外部 CDN/字体/图片，离线可打开；含统计卡片（消息总数、候选人数去重、已回复、待回复）、「最近收集状态」区（每通道最近收集时间/新增/正常或异常，来自 collection_status.json，0 新增也可见）与候选人消息表格（发件人/内容/时间/状态），按时间倒序。
+- 状态配色：待回复琥珀色、已回复绿色、收集异常红色；写入 HTML 的文本统一做转义；无消息时显示空状态。
+- 纯 Python 标准库实现：`python tools/gen_mail_report.py`（可用 `--messages`、`--outdir` 指定路径）；每次收集后用 `--log-channel/--log-account/--new/--replied/--skipped/--unread-total/--note` 记录本次结果，异常时加 `--anomaly`。
 
 ## 消息记录格式
 
